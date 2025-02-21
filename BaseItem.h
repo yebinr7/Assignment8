@@ -17,8 +17,7 @@ class CHAPTER3_API ABaseItem : public AActor, public IItemInterface
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
-	ABaseItem();
+	
 
 //protected:
 //	// Called when the game starts or when spawned
@@ -29,13 +28,39 @@ public:
 //	virtual void Tick(float DeltaTime) override;
 
 
+/** ================= 1. UPROPERTY (리플렉션 시스템 변수) ================= **/
+protected:
+
+	//루트 컴퍼넌트(씬)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item|Component")
+	USceneComponent* Scene;
+
+	//충돌 컴퍼넌트(플레이어가 충돌체 오버랩됐을때..)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item|Component")
+	USphereComponent* Collision;
+
+	//아이템 시각용 Mesh 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item|Component")
+	UStaticMeshComponent* StaticMesh;
 
 
+	//아이템 유형 편집 가능하게 지정
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+	FName ItemType;
 
-	//interface의 순수가상함수 오버라이딩 
-		
-	//플레이어가 이 아이템의 범위에 들어왔을 때 호출
-	//인자 엄청 복잡하게 받은 이유? 
+	// 파티클 시스템 만들어주기!
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item|Effects")
+	UParticleSystem* PickupParticle;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item|Effects")
+	USoundBase* PickupSound;
+
+/** ================= 2. UFUNCTION (리플렉션 시스템 함수) ================= **/
+
+/** ================= 3. 생성자 및 필수 오버라이드 함수 ================= **/
+	// Sets default values for this actor's properties
+	ABaseItem();
+	
 	virtual void OnItemOverlap(
 		UPrimitiveComponent* OverlappedComp,
 		AActor* OtherActor,
@@ -60,26 +85,19 @@ public:
 
 	//아이템 제거하는 공통함수(추가 이펙트 로직 가능)
 	virtual void DestroyItem();
+/** ================= 4. 일반 메서드 (리플렉션이 필요 없는 함수) ================= **/
 
-
-protected:
-	//루트 컴퍼넌트(씬)
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item|Component")
-	USceneComponent* Scene;
-
-	//충돌 컴퍼넌트(플레이어가 충돌체 오버랩됐을때..)
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item|Component")
-	USphereComponent* Collision;
-	
-	//아이템 시각용 Mesh 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item|Component")
-	UStaticMeshComponent* StaticMesh;
+/** ================= 5. 일반 멤버 변수 (리플렉션이 필요 없는 변수) ================= **/
 
 
 
-	//아이템 유형 편집 가능하게 지정
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
-	FName ItemType;
+	//interface의 순수가상함수 오버라이딩 
+		
+	//플레이어가 이 아이템의 범위에 들어왔을 때 호출
+	//인자 엄청 복잡하게 받은 이유? 
+
+
+
 
 
 };

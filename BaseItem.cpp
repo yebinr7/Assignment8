@@ -3,6 +3,9 @@
 
 #include "BaseItem.h"
 #include "Components/SphereComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Particles/ParticleSystemComponent.h"
+
 
 // Sets default values
 ABaseItem::ABaseItem()
@@ -85,6 +88,55 @@ void ABaseItem::OnItemEndOverlap(UPrimitiveComponent* OverlappedComp,
 
 void ABaseItem::ActivateItem(AActor* activator)
 {
+	// 베이스 아이템을 상속하는 아이템들은 모두 액티브 아이템 
+	UParticleSystemComponent* particle = nullptr;
+
+	if (PickupParticle) // 파티클이 존재한다면 <- 리플렉션 시스템에서 받아오나?
+	{
+		// ??? 뭔함수?
+		particle = UGameplayStatics::SpawnEmitterAtLocation(
+			GetWorld(),
+			PickupParticle,
+			GetActorLocation(),
+			GetActorRotation(),
+			true
+		);
+	}
+
+	if (PickupSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			GetWorld(),
+			PickupSound,
+			GetActorLocation()
+			);
+	}
+
+
+	// 받아온 파티클이..
+	if (particle)
+	{
+		FTimerHandle destroyParticleTimeHandle;
+		
+		//===============================
+		// 시간 설정해서 파티클 삭제하기!
+		//===============================
+
+		// 월드에 있는 타임매니저에서 타이머 설정하는데 
+		// 람다함수 이용해서 스코프 밖 파티클 포인터로 복사해 온다음 
+		// 포인터에서 그 파티클이 가르키는 컴포넌트 삭제(파티클 삭제)
+		GetWorld()->GetTimerManager().SetTimer(
+			destroyParticleTimeHandle,
+			[particle]()
+			{
+				particle->DestroyComponent();
+			},
+			2.0f,
+			false
+		);
+	}
+
+
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, FString::Printf(TEXT("Overlap!!")));
 }
 

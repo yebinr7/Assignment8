@@ -11,6 +11,9 @@ ABigCoinItem::ABigCoinItem()
 
 void ABigCoinItem::ActivateItem(AActor* activator)
 {
+
+
+
 	//DestroyItem(); // 아이템 소멸(부모의 DestroyItem() 혹은 자체 로직
 
 	//부모인 코인에서 코인 먹는 효과 만들어놨음

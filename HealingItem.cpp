@@ -12,6 +12,11 @@ AHealingItem::AHealingItem()
 
 void AHealingItem::ActivateItem(AActor* Activator)
 {
+	// 이거 해줘야 베이스아이템에 있는 이펙트 시스템 리플랙션해서 설정됨
+	Super::ActivateItem(Activator);
+
+
+
 	//플레이어 캐릭터의 체력 20만큼 회복시키는 로직
 	//베이스아이템에서 충돌처리 하면서 다형성으로 여기로 불려짐
 	if (Activator && Activator->ActorHasTag("Player"))

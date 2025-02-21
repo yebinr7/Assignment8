@@ -11,6 +11,9 @@ ASmallCoinItem::ASmallCoinItem()
 
 void ASmallCoinItem::ActivateItem(AActor* activator)
 {
+
+
+
 	//기본 코인 동작은 부모에서 구현해뒀음
 	Super::ActivateItem(activator);
 	//DestroyItem();

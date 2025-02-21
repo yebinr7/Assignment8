@@ -27,6 +27,9 @@ void AMineItem::ActivateItem(AActor* Activator)
 	// 실제로는 지연 시간 후 폭발 로직을 구현하거나,
 	// 폭발 이펙트, 데미지 계산 등을 추가할 수 있음
 
+	// 이거 해줘야 베이스아이템에 있는 이펙트 시스템 리플랙션해서 설정됨
+	Super::ActivateItem(Activator);
+
 
 	//Activate 됐다면 5초후 폭발 실행
 	GetWorld()->GetTimerManager().SetTimer(

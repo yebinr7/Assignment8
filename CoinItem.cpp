@@ -12,6 +12,12 @@ ACoinItem::ACoinItem()
 
 void ACoinItem::ActivateItem(AActor* activator)
 {
+
+	// 이거 해줘야 베이스아이템에 있는 이펙트 시스템 리플랙션해서 설정됨
+	Super::ActivateItem(activator);
+
+
+
 	//플레이어 태그 확인
 	if (activator && activator->ActorHasTag("Player"))
 	{

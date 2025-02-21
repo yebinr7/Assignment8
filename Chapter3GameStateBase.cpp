@@ -3,9 +3,19 @@
 
 #include "Chapter3GameStateBase.h"
 #include "Chapter3GameInstance.h"
+
+#include "Chapter3PlayerController.h"
+
 #include "Kismet/GameplayStatics.h"
 #include "SpawnVolume.h"
 #include "CoinItem.h"
+
+#include "Components/TextBlock.h"
+#include "Blueprint/UserWidget.h"
+
+
+
+
 
 AChapter3GameStateBase::AChapter3GameStateBase()
 	:Score(0), //0으로 이니셜라이즈
@@ -27,19 +37,46 @@ void AChapter3GameStateBase::BeginPlay()
 
 	// 게임 시작 시 첫 레벨부터 진행하기
 	StartLevel();
+
+
+	// 게임스테이트(전역 공유 데이터 관리하는)
+	GetWorldTimerManager().SetTimer( // 월드매니저 객체 불러와서 타이머 설정
+		HUDUpdateTimerHandle, // 내가 만든 핸들 타이머에
+		this, // 이 게임 스테이트 객체에서 타이머 실행 
+		&AChapter3GameStateBase::UpdateHUD, // 내가 만든 함수 발생하게 (함수포인터 방식) 
+		0.1f, // 0.1 초마다 발생 -> 매프레임에서 하는 것 대신에... 
+		true  // 반복 실행 여부
+	);
+
 }
 
 void AChapter3GameStateBase::StartLevel()
 {
+	// 컨트롤러에서 HUD 켜주기 UpdateHUD() -> 
+	if (APlayerController* playerController = GetWorld()->GetFirstPlayerController())
+	{
+		//다운 캐스팅
+		if (AChapter3PlayerController* chapter3PlayerController = Cast<AChapter3PlayerController>(playerController))
+		{
+			chapter3PlayerController->ShowGameHUD(); // 그냥 HUD 켜주기
+		}
+	}
+
+
+
 	// 볼륨레벨 전환 활용코드 
 	if (UGameInstance* gameInstance = GetGameInstance())
 	{
-		UChapter3GameInstance* chapter3GameInstance = Cast< UChapter3GameInstance>(gameInstance);
+		UChapter3GameInstance* chapter3GameInstance = Cast<UChapter3GameInstance>(gameInstance);
 		if (chapter3GameInstance)
 		{
 			CurrentLevelIndex = chapter3GameInstance->CurrentLevelIndex;
 		}
 	}
+
+
+	//// HUD 업데이트?;
+	//UpdateHUD();
 
 
 	// 레벨(Map)마다 웨이브 3개씩 존재함
@@ -172,7 +209,17 @@ void AChapter3GameStateBase::EndLevel()
 
 void AChapter3GameStateBase::OnGameOver()
 {
+	if (APlayerController* playerController = GetWorld()->GetFirstPlayerController())
+	{
+		if (AChapter3PlayerController* chapter3PlayerController = Cast<AChapter3PlayerController>(playerController))
+		{
+			chapter3PlayerController->SetPause(true); // 게임오버시 못움직에 설정
+			chapter3PlayerController->ShowMainMenu(true); // 게임 오버니깐 restart 로 true 해줘야함  -> 리스타트 버튼이 생김 
+		}
+	}
+
 	// 게임 끝! 
+	//UpdateHUD(); // 게임 끝나면 HUD 갱신해줘야함 
 	UE_LOG(LogTemp, Warning, TEXT("Game Over!!"));
 	// 여기서 UI를 띄운다거나, 재시작 기능을 넣을 수도 있음
 }
@@ -350,5 +397,66 @@ void AChapter3GameStateBase::EndWave()
 	//}
 
 	
+
+}
+
+void AChapter3GameStateBase::UpdateHUD()
+{
+	// 1. 월드에서 첫번째플레이어의(내가만든) 컨트롤러 포인터로 받아온다. APlayerController
+	// 2. APlayerController로 받아왔으니 내가 만든 컨트롤러 chapter3Controller로 다운캐스팅한다.
+	// 3. 내 컨트롤러안에 있는 HUD Get으로 얻어와서 UUserWidget 포인터로 가져온다.
+	// 4. Time 이라고 적혀있는 widget을 다운캐스팅하여 TextBlock 포인터로 가져온다.
+		// 5. 월드에서 관리하고 있는 레벨타이머핸들 가져와서 몇초 남았나 float로 받아온다.
+		// 6. TextBlock포인터에 그 받아온 남은 시간 값 설정해준다 -> (UI에서 이제 보이게됨)
+	// 7. Score 도 마찬가지로 Score라 적혀있는거 TextBlock 포인터로 가지고온다. 
+		// 8. 게임인스턴스 포인터로 받야온다.
+		// 9. 내가 만든 게임인스턴스로 다운캐스팅 하고
+		// 10. 존재한다면(nullptr 방어코드) UTextBlock 포인터에 스코어 값 설정해준다. 
+	// 11. 레벨값도 마찬가지로 Level이라 적혀있는거 TextBlock 포인터로 가져온다.
+		// 12. 현재레벨 +1 해서(idx 0부터시작했기에) TextBlock 포인터에 값 설정해준다. 
+
+
+	if (APlayerController* playerController = GetWorld()->GetFirstPlayerController())
+	{
+		if (AChapter3PlayerController* chapter3PlayerController = Cast<AChapter3PlayerController>(playerController))
+		{
+			if (UUserWidget* hUDWidget = chapter3PlayerController->GetHUDWidget())
+			{
+				// 시간 UI에 표시
+				if (UTextBlock* timeText = Cast<UTextBlock>(hUDWidget->GetWidgetFromName(TEXT("Time"))))
+				{
+					// myCheck:
+					float remainingTime = GetWorldTimerManager().GetTimerRemaining(LevelTimerHandle);
+					//float remainingTime = WaveDuration;
+					timeText->SetText(FText::FromString(FString::Printf(TEXT("Time: %.1f"), remainingTime))); // 12.3 같은 문자열 FString->FText로 변환해야함
+				}
+
+				// 스코어 UI에 표시
+				if (UTextBlock* scoreText = Cast<UTextBlock>(hUDWidget->GetWidgetFromName(TEXT("Score"))))
+				{
+					// 스코어는 게임 인스턴스에 존재하는 누적 스코어 보여주고 싶음
+					if (UGameInstance* gameInstance = GetGameInstance()) //; 이 전역함수 도대체 어디서나온겨?
+					{
+						UChapter3GameInstance* chapter3GameInstance = Cast<UChapter3GameInstance>(gameInstance);
+						if (chapter3GameInstance)
+						{
+							scoreText->SetText(FText::FromString(FString::Printf(TEXT("Score: %d"), chapter3GameInstance->TotalScore)));
+						}
+					}
+				}
+
+				// 레벨의 인덱스 표시 
+				if (UTextBlock* levelIndexText = Cast<UTextBlock>(hUDWidget->GetWidgetFromName(TEXT("Level"))))
+				{
+					// 레벨은 게임스테트에서 관리하고 있으니깐 현재 this가 가지고 있음
+					levelIndexText->SetText(FText::FromString(FString::Printf(TEXT("Level: %d"), CurrentLevelIndex + 1 )));
+				}
+
+			}
+		}
+	}
+
+	
+
 
 }

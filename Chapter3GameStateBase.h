@@ -29,8 +29,8 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Coin")
 	int32 CollectedCoinCount;
 	
-	// 각 레벨이 유지되는 시간 (초 단위)
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Level")
+	// 각 레벨이 유지되는 시간 (초 단위) ; BP에서 건들수있게
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level")
 	float LevelDuration;
 	
 	// 현재 진행 중인 레벨 인덱스
@@ -110,7 +110,7 @@ public:
 	void StartWave();
 
 	// 웨이브별 Duration 감소함수 웨이브별 10초씩 감소
-	float CalculateWaveDurationLinear(int CurrentWaveIndex, float InitialDuration = 60.0f, float MinDuration = 10.0f, float DecreasePerWave = 10.0f);
+	float CalculateWaveDurationLinear(int CurrentWaveIndex, float InitialDuration = 20.0f, float MinDuration = 10.0f, float DecreasePerWave = 10.0f);
 	
 	// 웨이브별 타임 만료
 	void OnWaveTimeUp();
@@ -120,9 +120,15 @@ public:
 	// 웨이브 종료시, 다음 웨이브 or 다음 레벨 진행
 	void EndWave();
 
+	// HUD 업데이트 함수
+	void UpdateHUD();
+
 
 	
 	/** ================= 5. 일반 멤버 변수 (리플렉션이 필요 없는 변수) ================= **/
 	// 매 레벨이 끝나기 전까지 시간이 흐르도록 관리하는 타이머
 	FTimerHandle LevelTimerHandle;
+
+	// HUD 헤드업 디스플레이 업데이트 타이머 
+	FTimerHandle HUDUpdateTimerHandle;
 };
